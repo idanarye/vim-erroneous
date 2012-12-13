@@ -52,7 +52,7 @@ function! erroneous#run(command,clearIfNoError,echoErrors,targetList,jump)
 	return 1
 endfunction
 
-"Find the error format for the program
+"find the error format for the program
 function! erroneous#getErrorFormat(program)
 	let l:wordsInProgram=split(a:program)
 	if type(g:erroneous#errorFormatChooser)==4 "if it's a dictionary
@@ -66,6 +66,8 @@ function! erroneous#getErrorFormat(program)
 	endif
 	return &errorformat
 endfunction
+
+"initialize the error format chooser to be an empty dictionary
 if(has("g:erroneous#errorFormatChooser"))
 	let g:erroneous#errorFormatChooser={}
 endif
