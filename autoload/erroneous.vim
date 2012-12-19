@@ -52,7 +52,10 @@ function! erroneous#run(command,clearIfNoError,errorPrintingMode,targetList,jump
 
 	"Set the error format
 	let l:oldErrorFormat=&errorformat
-	let &errorformat=erroneous#getErrorFormat(a:command)
+	let l:tmpErrorFormat=erroneous#getErrorFormat(a:command)
+	if type("")==type(l:tmpErrorFormat) && ""!=l:tmpErrorFormat
+		let &errorformat=l:tmpErrorFormat
+	end
 	call erroneous#setErrorList(a:targetList,a:jump,l:errors)
 	if 1==a:errorPrintingMode
 		echo join(l:errors,"\n")
