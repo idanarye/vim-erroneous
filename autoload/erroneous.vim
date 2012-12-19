@@ -1,15 +1,22 @@
 
 "execute a command and return the list of errors
-function! erroneous#execGetErrors(command)
+function! erroneous#execGetErrors(command,useTee)
 	let l:errFile=tempname()
-	exe "!".a:command." 2>".errFile
+	if a:useTee
+		if has('unix')
+			exe "!".a:command." 2> >(tee ".l:errFile.")"
+		elseif has('win32')
+		endif
+	else
+		exe "!".a:command." 2>".l:errFile
+	end
 	let l:errFileContents=readfile(errFile)
 	call delete(errFile)
 	return l:errFileContents
 endfunction
 
 "set the specified error list(1=quickfix,2=locations) to the specified expression
-function! s:setErrorList(targetList,jump,expression)
+function! erroneous#setErrorList(targetList,jump,expression)
 	if a:targetList==1
 		if(a:jump)
 			cexpr a:expression
@@ -26,14 +33,19 @@ function! s:setErrorList(targetList,jump,expression)
 endfunction
 
 "runs the command
-function! erroneous#run(command,clearIfNoError,echoErrors,targetList,jump)
+" * clearIfNoError: determines if the list will be clear in case there were no errors.
+" * errorPrintingMode: 0 for not printing them, 1 for printing the file after
+"   the process finished, and 2 for using 'tee' to print while the process is running.
+" * targetList: 1 for the quickfix list, 2 for the locations list.
+" * jump: determines if vim will jump to the first error.
+function! erroneous#run(command,clearIfNoError,errorPrintingMode,targetList,jump)
 	"Run the command
-	let l:errors=erroneous#execGetErrors(a:command)
+	let l:errors=erroneous#execGetErrors(a:command,2==a:errorPrintingMode)
 
 	"Check if there were errors
-	if len(l:errors)==0 
+	if len(l:errors)==0
 		if a:clearIfNoError
-			call s:setErrorList(a:targetList,a:jump,"")
+			call erroneous#setErrorList(a:targetList,a:jump,"")
 		endif
 		return 0
 	endif
@@ -41,11 +53,8 @@ function! erroneous#run(command,clearIfNoError,echoErrors,targetList,jump)
 	"Set the error format
 	let l:oldErrorFormat=&errorformat
 	let &errorformat=erroneous#getErrorFormat(a:command)
-	let l:errorFormatOK=&errorformat!=""
-	if l:errorFormatOK
-		call s:setErrorList(a:targetList,a:jump,l:errors)
-	endif
-	if (!l:errorFormatOK)||a:echoErrors
+	call erroneous#setErrorList(a:targetList,a:jump,l:errors)
+	if 1==a:errorPrintingMode
 		echo join(l:errors,"\n")
 	endif
 	let &errorformat=l:oldErrorFormat
@@ -55,19 +64,19 @@ endfunction
 "find the error format for the program
 function! erroneous#getErrorFormat(program)
 	let l:wordsInProgram=split(a:program)
-	if type(g:erroneous#errorFormatChooser)==4 "if it's a dictionary
-		for l:word in l:wordsInProgram
-			if has_key(g:erroneous#errorFormatChooser,l:word)
-				if(g:erroneous#errorFormatChooser[l:word] isnot 0)
-					return g:erroneous#errorFormatChooser[l:word]
+	if(exists("g:erroneous_errorFormatChooser"))
+		if type(g:erroneous_errorFormatChooser)==type({}) "if it's a dictionary
+			for l:word in l:wordsInProgram
+				let l:word=split(l:word,'/')[-1]
+				if has_key(g:erroneous_errorFormatChooser,l:word)
+					if(g:erroneous_errorFormatChooser[l:word] isnot 0)
+						return g:erroneous_errorFormatChooser[l:word]
+					endif
 				endif
-			endif
-		endfor
+			endfor
+		endif
 	endif
 	return &errorformat
 endfunction
 
-"initialize the error format chooser to be an empty dictionary
-if(has("g:erroneous#errorFormatChooser"))
-	let g:erroneous#errorFormatChooser={}
-endif
+
