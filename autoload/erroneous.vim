@@ -84,14 +84,23 @@ endfunction
 " * command: the command to get the format to
 " * depth: how deep to go into files to search for shebangs\associations
 function! erroneous#getErrorFormat(command,depth)
+	if(exists("g:erroneous_errorFormatChooserPatterns"))
+		if type(g:erroneous_errorFormatChooserPatterns)==type({}) "if we have a dictionary of patterns
+			for [l:key,l:value] in items(g:erroneous_errorFormatChooserPatterns)
+				if a:command =~ l:key
+					return l:value
+				endif
+			endfor
+		endif
+	endif
 	let l:wordsInCommand=split(a:command)
-	if(exists("g:erroneous_errorFormatChooser"))
-		if type(g:erroneous_errorFormatChooser)==type({}) "if it's a dictionary
+	if(exists("g:erroneous_errorFormatChooserWords"))
+		if type(g:erroneous_errorFormatChooserWords)==type({}) "if it's a dictionary
 			for l:fileWord in l:wordsInCommand
 				let l:word=split(l:fileWord,'/')[-1]
-				if has_key(g:erroneous_errorFormatChooser,l:word)
-					if(g:erroneous_errorFormatChooser[l:word] isnot 0)
-						return g:erroneous_errorFormatChooser[l:word]
+				if has_key(g:erroneous_errorFormatChooserWords,l:word)
+					if(g:erroneous_errorFormatChooserWords[l:word] isnot 0)
+						return g:erroneous_errorFormatChooserWords[l:word]
 					endif
 				elseif 0<a:depth
 					if executable(l:fileWord)
