@@ -1,0 +1,163 @@
+*erroneous.txt* The right way to handle errors
+
+Author:  Idan Arye <https://github.com/someboddy/>
+License: Same terms as Vim itself (see |license|)
+
+Version: 0.1.0
+
+INTRODUCTION                                     *erroneous*
+
+Erroneous is a plugin for handling errors from other programs. Vim provides
+you with the |:make| command to run compilers and parse the errors using the
+'errorformat' option, but you must the 'errorformat' option in advance. If you
+more than one many language, you'll have to change 'errorformat' often. This
+is usually done with file-type plugins - but that means you have to always
+compile from one of the source files(you can't, for example, compile from one
+of the configuration XML files).
+You can also set a long 'errorformat' that can catch many formats - but in my
+experience those catch-all 'errorformat's tend to identify error-description
+lines as error headlines and create entries in the quickfix list that are
+mapped to nowhere and send you to empty buffers. Not as fun as it sounds...
+
+Erroneous takes a different approach - instead of parsing stderr based on the
+filetype, parsing is done based on the shell command that invoked the program
+that created the error. So, if you run "javac MyClass.java" Erroneous will
+automatically set the 'errorformat' to parse "javac" errors, while running
+"gcc main.c" will cause Erroneous to set 'errorformat' to parse "gcc" errors.
+
+Erroneous can also read shebangs to know how to parse errors of interepted
+scripts in linux, and it provides API for other plugins that want to determine
+the error format by other means.
+
+
+USAGE									   *erroneous-usage*
+
+First you need to set the |g:erroneous_errorFormatChooserPatterns| and/or the
+|g:erroneous_errorFormatChooserWords| dictionaries. Then use the supplied
+commands(see |erroneous-commands| for list of commands) to run shell commands
+and parse their error formats according to what you configured in those
+dictionaries.
+
+
+CONFIGURATION                 *erroneous-configuration*
+
+You need to configure two dictionaries:
+-	*g:erroneous_errorFormatChooserPatterns* uses patterns strings as keys.
+	Those patterns are matched with the entire command.
+-	*g:erroneous_errorFormatChooserWords* uses word strings as keys. Those
+	words are compared(directly - not as regex) to the command broken to
+	words.
+
+The shell command - and the shebang in any file mentioned in it that has a
+shebang - will be tested agains the patterns dictionary and then be broken
+into words and tested agains the words dictionary.
+
+The values in the dictionaries can be either strings or functions. If a string
+is selected, it is used as error format for parsing the errors. If a function
+is selected, it will be called and given 4 arguments:
+-	The command
+-	The error output
+-	The target list
+-	The "jump" choice
+
+The function is responsible for handling the errors, and should return 1 to
+indicate that there was an error or 0 if it decides there was no error,
+because |erroneous#run| will retrun whatever that function returns. If the
+function uses |erroneous#setErrorList|, it should pass the targetList and jump
+directly to it.
+
+
+COMMANDS                      *erroneous-commands*
+
+										*erroneous-Emake*
+Emake[!] [argument]		Like running |:make| on the argument, but
+						auto-detects the error format.
+
+										*erroneous-Elmake*
+Elmake[!] [argument]   	Like Emake, but uses the location list.
+
+										*erroneous-Ebuild*
+Ebuild[!] [argument]	Run the argument as shell command(not using 'makeprg')
+						and auto-detect the error format.
+
+										*erroneous-Elbuild*
+Elbuild[!] [argument]  	Like Ebuild, but uses the location list.
+
+										*erroneous-Ebuild*
+Erun[!] [argument]		Run the argument as shell command(not using 'makeprg')
+						and auto-detect the error format. If there were no
+						errors, do not alter the error list. In Windows, opens
+						a shell window to run the command.
+
+										*erroneous-Elrun*
+Elrun[!] [argument]   	Like Erun, but uses the location list.
+
+All commands take a single argument and jump to the first errror unless [!] is given.
+
+FUNCTIONS					  *erroneous-functions* *erroneous-api*
+
+
+erroneous#run(command,clearIfNoError,errorPrintingMode,targetList,jump) *erroneous#run*
+				This is the function the commands call. It runs a shell
+				command, determines the error format, and updates the error
+				list.
+				-command			The shell command to run
+				-clearIfNoError		1 to clear the error list if there were no
+									errors
+                -errorPrintingMode	0 to not print any errors
+									1 to echo the errors after the program
+									  is done
+									2 to use "tee" to print the errors while
+									  the program runs(requires "tee")
+									3 to run the entire command silently, and
+									  print both stdout and stderr after the
+									  shell is done
+                -targetList         1 for the |quickfix| list
+                                    2 for the |locations-list|
+                -jump				1 to jump to the first error
+
+erroneous#setErrorList(targetList,jump,errors,errorFormat)	   *erroneous#setErrorList*
+				This function updates the error list. If you use a function in
+				the error format dictionaries, you need to call it manually to
+				set the error list.
+                -targetList		1 for the |quickfix| list
+                            	2 for the |locations-list|
+                -jump			1 to jump to the first error
+                -errors			The list or string of errors
+                -errorFormat	The error format to use for parsing the errors
+
+erroneous#getErrorFormat(command,depth)						 *erroneous#getErrorFormat*
+				This function determines the 'errorformat' for the given
+				command. It uses the format dictionaries to make a desicion.
+				This function can use shebangs in Unix or file associations in
+				Windows to determine the error format.
+				-command	The command to determine 'errorformat' for
+				-depth		How deep to go in the recursion when following
+							shebangs or file associations
+NOTE 	this function may return a string or a function - so if you need to
+		call it make sure you use a variable name that begins with a uppercase
+		letter: for example l:ErrorFormat instead of l:errorFormat.
+
+erroneous#execGetErrors(command,printingMode)				  *erroneous#execGetErrors*
+				This function simply runs a shell command and returns a list
+				of the lines in the reuslt stderr.
+
+erroneous#getCommandForRunningFile(file)		   *erroneous#getCommandForRunningFile*
+				-command			The shell command to run
+                -errorPrintingMode	0 to not print any errors
+									1 to echo the errors after the program
+									  is done
+									2 to use "tee" to print the errors while
+									  the program runs(requires "tee")
+									3 to run the entire command silently, and
+									  print both stdout and stderr after the
+									  shell is done
+
+
+OTHER SETTINGS									 *erroneous-settings*
+
+*g:erroneous_detectionDepth*	The depth |erroneous#run| will use when
+								calling |erroneous#getErrorFormat|. If
+								undefined or not integer,
+								|erroneous#getErrorFormat| will be called with
+								depth 1.
