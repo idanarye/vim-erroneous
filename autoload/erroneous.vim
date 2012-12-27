@@ -116,7 +116,6 @@ function! erroneous#getErrorFormat(command,depth)
 						return g:erroneous_errorFormatChooserWords[l:word]
 					endif
 				elseif 0<a:depth
-					echo "====hi===="
 					if executable(l:fileWord)
 						let l:fileCommand=erroneous#getCommandForRunningFile(l:fileWord)
 						if type('')==type(l:fileCommand)
