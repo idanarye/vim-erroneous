@@ -92,9 +92,9 @@ endfunction
 function! erroneous#getErrorFormat(command,depth)
 	if(exists("g:erroneous_errorFormatChooserPatterns"))
 		if type(g:erroneous_errorFormatChooserPatterns)==type({}) "if we have a dictionary of patterns
-			for [l:key,l:value] in items(g:erroneous_errorFormatChooserPatterns)
+			for l:key in keys(g:erroneous_errorFormatChooserPatterns)
 				if a:command =~ l:key
-					return l:value
+					return g:erroneous_errorFormatChooserPatterns[l:key]
 				endif
 			endfor
 		endif
