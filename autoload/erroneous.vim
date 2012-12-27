@@ -20,22 +20,30 @@ function! erroneous#execGetErrors(command,printingMode)
 	return l:errFileContents
 endfunction
 
-"set the specified error list(1=quickfix,2=locations) to the specified expression
+"set the specified error list(1=quickfix,2=locations) to the specified errors
 " * targetList: 1 for the quickfix list, 2 for locations list.
 " * jump: determine if to jump to the first error.
-" * expression: the expression to set the list to.
-function! erroneous#setErrorList(targetList,jump,expression)
-	if a:targetList==1
-		if(a:jump)
-			cexpr a:expression
-		else
-			cgetexpr a:expression
-		endif
-	elseif a:targetList==2
-		if(a:jump)
-			lexpr a:expression
-		else
-			lgetexpr a:expression
+" * errors: the errors to set the list to.
+" * errorFormat: the errorformat to use when setting the list.
+function! erroneous#setErrorList(targetList,jump,errors,errorFormat)
+	if type('')==type(a:errorFormat)
+		let l:oldErrorFormat=&errorformat
+		let &errorformat=a:errorFormat
+		call erroneous#setErrorList(a:targetList,a:jump,a:errors,0)
+		let &errorformat=l:oldErrorFormat
+	else
+		if a:targetList==1
+			if(a:jump)
+				cexpr a:errors
+			else
+				cgetexpr a:errors
+			endif
+		elseif a:targetList==2
+			if(a:jump)
+				lexpr a:errors
+			else
+				lgetexpr a:errors
+			endif
 		endif
 	endif
 endfunction
@@ -64,20 +72,18 @@ function! erroneous#run(command,clearIfNoError,errorPrintingMode,targetList,jump
 	"Check if there were errors
 	if len(l:errors)==0
 		if a:clearIfNoError
-			call erroneous#setErrorList(a:targetList,a:jump,"")
+			call erroneous#setErrorList(a:targetList,a:jump,"",0)
 		endif
 		return 0
 	endif
 
-	"Set the error format
-	let l:oldErrorFormat=&errorformat
-	let l:tmpErrorFormat=erroneous#getErrorFormat(a:command,1)
-	if type("")==type(l:tmpErrorFormat) && ""!=l:tmpErrorFormat
-		let &errorformat=l:tmpErrorFormat
-	end
-	call erroneous#setErrorList(a:targetList,a:jump,l:errors)
-	let &errorformat=l:oldErrorFormat
-	return 1
+	let l:FormatGetterResult=erroneous#getErrorFormat(a:command,1)
+	if type("")==type(l:FormatGetterResult)
+		call erroneous#setErrorList(a:targetList,a:jump,l:errors,l:FormatGetterResult)
+		return 1
+	elseif type(function('tr'))==type(l:FormatGetterResult)
+		return l:FormatGetterResult(a:command,l:errors,a:targetList,a:jump)
+	endif
 endfunction
 
 "find the error format for a shell command
@@ -106,9 +112,9 @@ function! erroneous#getErrorFormat(command,depth)
 					if executable(l:fileWord)
 						let l:fileCommand=erroneous#getCommandForRunningFile(l:fileWord)
 						if type('')==type(l:fileCommand)
-							let l:fileResult=erroneous#getErrorFormat(l:fileCommand,a:depth-1)
-							if type('')==type(l:fileResult)
-								return l:fileResult
+							let l:FileResult=erroneous#getErrorFormat(l:fileCommand,a:depth-1)
+							if type('')==type(l:FileResult) || type(function('tr'))==type(l:FileResult)
+								return l:FileResult
 							end
 						endif
 					endif
