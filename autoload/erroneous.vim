@@ -1,3 +1,4 @@
+"Version: 0.1.0
 
 "execute a command and return the list of errors
 " * command: the command to run.
@@ -77,8 +78,14 @@ function! erroneous#run(command,clearIfNoError,errorPrintingMode,targetList,jump
 		return 0
 	endif
 
-	let l:FormatGetterResult=erroneous#getErrorFormat(a:command,1)
-	if type("")==type(l:FormatGetterResult)
+	let l:recursionDepth=1
+	if exists("g:erroneous_detectionDepth")
+		if type(0)==type(g:erroneous_detectionDepth)
+			let l:recursionDepth=g:erroneous_detectionDepth
+		endif
+	endif
+	let l:FormatGetterResult=erroneous#getErrorFormat(a:command,l:recursionDepth)
+	if type("")==type(l:FormatGetterResult) || type(0)==type(l:FormatGetterResult)
 		call erroneous#setErrorList(a:targetList,a:jump,l:errors,l:FormatGetterResult)
 		return 1
 	elseif type(function('tr'))==type(l:FormatGetterResult)
@@ -109,6 +116,7 @@ function! erroneous#getErrorFormat(command,depth)
 						return g:erroneous_errorFormatChooserWords[l:word]
 					endif
 				elseif 0<a:depth
+					echo "====hi===="
 					if executable(l:fileWord)
 						let l:fileCommand=erroneous#getCommandForRunningFile(l:fileWord)
 						if type('')==type(l:fileCommand)
