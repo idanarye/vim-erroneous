@@ -83,7 +83,7 @@ Ebuild[!] [argument]	Run the argument as shell command(not using 'makeprg')
 										*erroneous-Elbuild*
 Elbuild[!] [argument]  	Like Ebuild, but uses the location list.
 
-										*erroneous-Ebuild*
+										*erroneous-Erun*
 Erun[!] [argument]		Run the argument as shell command(not using 'makeprg')
 						and auto-detect the error format. If there were no
 						errors, do not alter the error list. In Windows, opens
