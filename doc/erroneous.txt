@@ -3,7 +3,7 @@
 Author:  Idan Arye <https://github.com/someboddy/>
 License: Same terms as Vim itself (see |license|)
 
-Version: 0.1.0
+Version: 0.2.0
 
 INTRODUCTION                                     *erroneous*
 
@@ -52,11 +52,30 @@ The shell command - and the shebang in any file mentioned in it that has a
 shebang - will be tested agains the patterns dictionary and then be broken
 into words and tested agains the words dictionary.
 
+Example >
+	let g:erroneous_errorFormatChooserWords={
+				\'javac': '%A%f:%l:%m,%-Z%p^,%-C%.%#',
+				\'ruby': '%f:%l:%m',
+				\'dmd': '%f(%l): %m',
+				\}
+<
+
 The values in the dictionaries can be either strings or functions. If a string
 is selected, it is used as error format for parsing the errors. If a function
-is selected, it will be called and given 4 arguments:
--	The command
--	The error output
+is selected, it need to be as described in the next section.
+
+
+CUSTOMIZED FUNCTIONS		*erroneous-customized-functions*
+
+The entries in |g:erroneous_errorFormatChooserPatterns| and
+|g:erroneous_errorFormatChooserWords| can contain functions that will be
+called to handle errors. Those functions will be called after the command is
+run, so they don't need to run it - just to handle the error output.
+
+Those functions should accept the following arguments:
+-	The command. The function shouldn't run it, - it was already ran
+-	The standard output received from running the command
+-	The error output received from running the command
 -	The target list
 -	The "jump" choice
 
@@ -65,6 +84,42 @@ indicate that there was an error or 0 if it decides there was no error,
 because |erroneous#run| will retrun whatever that function returns. If the
 function uses |erroneous#setErrorList|, it should pass the targetList and jump
 directly to it.
+
+See the autoload/erroneous_make.vim, autoload/erroneous_rake.vim etc for
+examples to such functions.
+
+
+BUILD SYSTEMS					*erroneous-build-systems*
+
+The same build system can be used to run different tools. For example, the
+same Makefile can call both gcc,flex and bison. Each has it's own slightly
+different error format, and you can't guess that error format just from the
+command "make" that you use for running it all.
+
+Erroneous' customized functions can read the output from a build system, find
+the command the build system invoked that caused the error, and use it to
+determine the correct 'errorformat'.
+
+Erroneous comes built in with such customized functions to handle make, rake
+and ant. These functions are defined in Erroneous, but not assigned to the
+error format dictionaries - you need to do that yourself. But that's a very
+easy feat: >
+	let g:erroneous_errorFormatChooserWords={
+				\'rake': function('erroneous_rake#parseErrorOutput'),
+				\'ant': function('erroneous_ant#parseErrorOutput'),
+				\'make': function('erroneous_make#parseErrorOutput'),
+				\}
+<
+
+NOTE
+Ant write errors to stdout instead of stderr, so calling
+|erroneous#execGetErrors| with printingMode 0 will not allow Erroneous to read
+the errors - because it prevents it from reading stdout. That also means that
+if you want to use it under windows you need to either have tee installed or
+to use Emake, Ebuild, Elmake or Elbuild when running Ant compilations.  Using
+Erun or Elrun without tee installed will result in Erroneous unable to get the
+stdout from Ant, preventing it from reading and parsing the errors.
+
 
 
 COMMANDS                      *erroneous-commands*
@@ -116,6 +171,23 @@ erroneous#run(command,clearIfNoError,errorPrintingMode,targetList,jump) *erroneo
                                     2 for the |locations-list|
                 -jump				1 to jump to the first error
 
+erroneous#handleCommandResults                       *erroneous#handleCommandResults*
+				This function can be called after running the command to
+				handle the errors. It's useful when using
+				|erroneous-customized-functions| that handle with build
+				system, because after you discover what command the build
+				system called that cause the error you want to run this
+				function again with that command.
+				-command			The shell command that was ran. Doesn't
+									actually run it
+                -output				The lines from stdout when the command was
+									ran
+                -errors				The lines from stderr when the command was
+									ran
+                -targetList         1 for the |quickfix| list
+                                    2 for the |locations-list|
+                -jump				1 to jump to the first error
+
 erroneous#setErrorList(targetList,jump,errors,errorFormat)	   *erroneous#setErrorList*
 				This function updates the error list. If you use a function in
 				the error format dictionaries, you need to call it manually to
@@ -140,7 +212,17 @@ NOTE 	this function may return a string or a function - so if you need to
 
 erroneous#execGetErrors(command,printingMode)				  *erroneous#execGetErrors*
 				This function simply runs a shell command and returns a list
-				of the lines in the reuslt stderr.
+				with two elements. The first element is a list of lines from
+				stdout and the second is a list of lines from stderr.
+				-command			The shell command to run
+				-printingMode		0 to not print stderr. stdout will be
+									printed normally
+									1 to print stdout and stderr using "tee"
+									2 to print nothing
+NOTE	Using printingMode 1 requires "tee" installed and in the path. Using
+		printingMode 0 prevents this function from returning stdout - which is
+		a problem if you try to run ant, since ant prints javac's stderr to
+		it's own stdout.
 
 erroneous#getCommandForRunningFile(file)		   *erroneous#getCommandForRunningFile*
 				-command			The shell command to run

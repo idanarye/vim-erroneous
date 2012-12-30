@@ -1,24 +1,31 @@
-"Version: 0.1.0
+"Version: 0.2.0
 
-"execute a command and return the list of errors
+"execute a command and return a list of two items: stdout and stderr(both are
+"lists). If printingMode is 0 then it won't be able to return stdout.
 " * command: the command to run.
-" * printingMode: 0 to not print stderr, 1 to print it using 'tee',
-"   2 to run the entire command silently and print stdout after it's done.
+" * printingMode: 0 to not print stderr, 1 to print stdout and stderr using
+" 'tee', and 2 to print nothing.
 function! erroneous#execGetErrors(command,printingMode)
 	let l:errFile=tempname()
+	let l:outFileContents=[]
 	if 0==a:printingMode
-		exe "!".a:command." 2>".l:errFile
-	elseif 1==a:printingMode
-		if has('unix')
-			exe "!".a:command." 2> >(tee ".l:errFile.")"
-		elseif has('win32')
+		exe "!(".a:command.") 2>".l:errFile
+	else
+		let l:outFile=tempname()
+		if 1==a:printingMode
+			if has('unix')
+				exe "!(".a:command.") 2> >(tee ".l:errFile.") 1> >(tee ".l:outFile.")"
+			elseif has('win32')
+			endif
+		elseif 2==a:printingMode
+			exe "!(".a:command.") 2>".l:errFile." 1>".l:outFile
 		endif
-	elseif 2==a:printingMode
-		echo system(a:command." 2>".l:errFile)
+		let l:outFileContents=readfile(l:outFile)
+		call delete(l:outFile)
 	endif
 	let l:errFileContents=readfile(l:errFile)
 	call delete(l:errFile)
-	return l:errFileContents
+	return [l:outFileContents,l:errFileContents]
 endfunction
 
 "set the specified error list(1=quickfix,2=locations) to the specified errors
@@ -53,21 +60,21 @@ endfunction
 " * command: the command to run.
 " * clearIfNoError: determines if the list will be clear in case there were no errors.
 " * errorPrintingMode: 0 for not printing them, 1 for printing the file after
-"   the process finished, and 2 for using 'tee' to print while the process is running,
+"   the process finished, 2 for using 'tee' to print while the process is running,
 "   and 3 for running the command silently and printing the results afterward.
 " * targetList: 1 for the quickfix list, 2 for the locations list.
 " * jump: determines if vim will jump to the first error.
 function! erroneous#run(command,clearIfNoError,errorPrintingMode,targetList,jump)
 	"Run the command
 	if 0==a:errorPrintingMode
-		let l:errors=erroneous#execGetErrors(a:command,0)
+		let [l:output,l:errors]=erroneous#execGetErrors(a:command,0)
 	elseif 1==a:errorPrintingMode
-		let l:errors=erroneous#execGetErrors(a:command,0)
+		let [l:output,l:errors]=erroneous#execGetErrors(a:command,0)
 		echo join(l:errors,"\n")
 	elseif 2==a:errorPrintingMode
-		let l:errors=erroneous#execGetErrors(a:command,1)
+		let [l:output,l:errors]=erroneous#execGetErrors(a:command,1)
 	elseif 3==a:errorPrintingMode
-		let l:errors=erroneous#execGetErrors(a:command,1)
+		let [l:output,l:errors]=erroneous#execGetErrors(a:command,1)
 	endif
 
 	"Check if there were errors
@@ -78,6 +85,17 @@ function! erroneous#run(command,clearIfNoError,errorPrintingMode,targetList,jump
 		return 0
 	endif
 
+	return erroneous#handleCommandResults(a:command,l:output,l:errors,a:targetList,a:jump)
+endfunction
+
+"Assumed the supplied command was ran and given the supplied errors, and
+"parses them normally.
+" * command: the command that was ran.
+" * errors: the standard output that were returned.
+" * errors: the errors that were returned.
+" * targetList: 1 for the quickfix list, 2 for the locations list.
+" * jump: determines if vim will jump to the first error.
+function! erroneous#handleCommandResults(command,output,errors,targetList,jump)
 	let l:recursionDepth=1
 	if exists("g:erroneous_detectionDepth")
 		if type(0)==type(g:erroneous_detectionDepth)
@@ -86,10 +104,10 @@ function! erroneous#run(command,clearIfNoError,errorPrintingMode,targetList,jump
 	endif
 	let l:FormatGetterResult=erroneous#getErrorFormat(a:command,l:recursionDepth)
 	if type("")==type(l:FormatGetterResult) || type(0)==type(l:FormatGetterResult)
-		call erroneous#setErrorList(a:targetList,a:jump,l:errors,l:FormatGetterResult)
+		call erroneous#setErrorList(a:targetList,a:jump,a:errors,l:FormatGetterResult)
 		return 1
 	elseif type(function('tr'))==type(l:FormatGetterResult)
-		return l:FormatGetterResult(a:command,l:errors,a:targetList,a:jump)
+		return l:FormatGetterResult(a:command,a:output,a:errors,a:targetList,a:jump)
 	endif
 endfunction
 
@@ -148,3 +166,20 @@ function! erroneous#getCommandForRunningFile(file)
 	endif
 endfunction
 
+"Adds the prefix to the format before the errorformat prefixes
+" * prefix: the prefix to add
+" * format: the source errorformat
+function! erroneous#addPrefixToFormat(prefix,format)
+	let l:source=a:format
+	let l:result=''
+	while 1
+		let l:formatPrefixLength=len(matchstr(l:source,'^.\{-}\(%-\?[ACEIW]\)'))
+		"echo matchstr(l:source,'^\(%[AEIW]\)*')
+		"echo l:source
+		if 0==l:formatPrefixLength
+			return l:result.l:source
+		endif
+		let l:result=l:result.l:source[:(l:formatPrefixLength-1)].a:prefix
+		let l:source=l:source[(l:formatPrefixLength):]
+	endwhile
+endfunction

@@ -27,10 +27,29 @@ the error format by other means.
 USAGE
 =====
 
-First you need to set the g:erroneous_errorFormatChooserPatterns and/or the
-g:erroneous_errorFormatChooserWords dictionaries. Then use the supplied
+First you need to set the g:erroneous\_errorFormatChooserPatterns and/or the
+g:erroneous\_errorFormatChooserWords dictionaries. Then use the supplied
 commands(see erroneous-commands for list of commands) to run shell commands
 and parse their error formats according to what you configured in those
 dictionaries.
 
-Refer to the vim-doc for more information.
+Refer to the vim-doc for examples and more information.
+
+
+BUILD SYSTEM SUPPORT
+====================
+
+Erroneous can read and parse error output from
+[Make](http://www.gnu.org/software/make), [Rake](http://rake.rubyforge.org) and
+[Apache Ant](http://ant.apache.org). I've tried to support Maven, but Maven
+writes the stderr of the commands it runs to it's stdout - __all of it__.
+Without stderr, Erroneous can not tell if there were any errors.
+
+Ant also write errors to stdout, but it at least writes __something__ to
+stderr, so Erroneous can detect there were errors. However, since the errors
+themselves are in stdout, if you want to use it under windows you need to
+either have [tee](http://gnuwin32.sourceforge.net/packages/coreutils.htm)
+installed or to use Emake, Ebuild, Elmake or Elbuild when running Ant
+compilations. Using Erun or Elrun without tee installed will result in
+Erroneous unable to get the stdout from Ant, preventing it from reading and
+parsing the errors.

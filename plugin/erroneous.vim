@@ -1,3 +1,5 @@
+"Version: 0.2.0
+
 if has('unix')
 	command! -nargs=? -complete=shellcmd -bang Emake call erroneous#run(&makeprg." ".<q-args>,1,2,1,<bang>1)
 	command! -nargs=? -complete=shellcmd -bang Elmake call erroneous#run(&makeprg." ".<q-args>,1,2,2,<bang>1)
