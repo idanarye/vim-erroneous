@@ -22,7 +22,7 @@ function! erroneous_ant#parseErrorOutput(command,output,errors,targetList,jump)
 	for [l:key,l:value] in items(l:subCommands)
 		let l:errorformat=l:errorformat.erroneous#addPrefixToFormat('%\s\*['.l:key.']',l:value).','
 	endfor
-	let l:errorformat=l:errorformat."%f:%l: %m" "add Ant's error format
+	let l:errorformat=l:errorformat."%^%f:%l: %m" "add Ant's error format
 
 	call erroneous#setErrorList(a:targetList,a:jump,a:output+a:errors,l:errorformat)
 	return 1
