@@ -1,4 +1,4 @@
-"Version: 0.2.0
+"Version: 0.2.1
 
 "execute a command and return a list of two items: stdout and stderr(both are
 "lists). If printingMode is 0 then it won't be able to return stdout.
@@ -173,10 +173,11 @@ function! erroneous#addPrefixToFormat(prefix,format)
 	let l:source=a:format
 	let l:result=''
 	while 1
-		let l:formatPrefixLength=len(matchstr(l:source,'^.\{-}\(%-\?[ACEIW]\)'))
+		let l:formatPrefixLength=len(matchstr(l:source,'^.\{-}\(%[-+]\?[ACEIWZ>]\)'))
 		"echo matchstr(l:source,'^\(%[AEIW]\)*')
 		"echo l:source
 		if 0==l:formatPrefixLength
+			echo l:result.l:source
 			return l:result.l:source
 		endif
 		let l:result=l:result.l:source[:(l:formatPrefixLength-1)].a:prefix

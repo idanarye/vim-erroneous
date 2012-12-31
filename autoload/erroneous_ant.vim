@@ -1,4 +1,4 @@
-"Version: 0.2.0
+"Version: 0.2.1
 
 "Parse errors for Ant. To be placed inside the erroneous dictionaries.
 " * command: The command

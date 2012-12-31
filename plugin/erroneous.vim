@@ -1,4 +1,4 @@
-"Version: 0.2.0
+"Version: 0.2.1
 
 if has('unix')
 	command! -nargs=? -complete=shellcmd -bang Emake call erroneous#run(&makeprg." ".<q-args>,1,2,1,<bang>1)
