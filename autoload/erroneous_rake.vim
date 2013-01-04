@@ -1,4 +1,4 @@
-"Version: 0.2.1
+"Version: 0.3.0
 
 "Parse errors for Rake. To be placed inside the erroneous dictionaries.
 " * command: The command

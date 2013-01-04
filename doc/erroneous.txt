@@ -5,7 +5,7 @@ License: Same terms as Vim itself (see |license|)
 
 Version: 0.2.1
 
-INTRODUCTION                                     *erroneous*
+INTRODUCTION                                                       *erroneous*
 
 Erroneous is a plugin for handling errors from other programs. Vim provides
 you with the |:make| command to run compilers and parse the errors using the
@@ -30,7 +30,7 @@ scripts in linux, and it provides API for other plugins that want to determine
 the error format by other means.
 
 
-USAGE									   *erroneous-usage*
+USAGE               									     *erroneous-usage*
 
 First you need to set the |g:erroneous_errorFormatChooserPatterns| and/or the
 |g:erroneous_errorFormatChooserWords| dictionaries. Then use the supplied
@@ -38,8 +38,12 @@ commands(see |erroneous-commands| for list of commands) to run shell commands
 and parse their error formats according to what you configured in those
 dictionaries.
 
+NOTE	Erroneous can not be used for running commands that require user
+		interaction, since it redirects stderr and stdout to files and only
+		displays them once the program finishes.
 
-CONFIGURATION                 *erroneous-configuration*
+
+CONFIGURATION                                        *erroneous-configuration*
 
 You need to configure two dictionaries:
 -	*g:erroneous_errorFormatChooserPatterns* uses patterns strings as keys.
@@ -65,7 +69,7 @@ is selected, it is used as error format for parsing the errors. If a function
 is selected, it need to be as described in the next section.
 
 
-CUSTOMIZED FUNCTIONS		*erroneous-customized-functions*
+CUSTOMIZED FUNCTIONS		                  *erroneous-customized-functions*
 
 The entries in |g:erroneous_errorFormatChooserPatterns| and
 |g:erroneous_errorFormatChooserWords| can contain functions that will be
@@ -82,14 +86,14 @@ Those functions should accept the following arguments:
 The function is responsible for handling the errors, and should return 1 to
 indicate that there was an error or 0 if it decides there was no error,
 because |erroneous#run| will retrun whatever that function returns. If the
-function uses |erroneous#setErrorList|, it should pass the targetList and jump
-directly to it.
+function uses |erroneous#setErrorList|, it should pass it's "targetList" and
+"jump" arguments to it.
 
 See the autoload/erroneous_make.vim, autoload/erroneous_rake.vim etc for
 examples to such functions.
 
 
-BUILD SYSTEMS					*erroneous-build-systems*
+BUILD SYSTEMS				                         *erroneous-build-systems*
 
 The same build system can be used to run different tools. For example, the
 same Makefile can call both gcc,flex and bison. Each has it's own slightly
@@ -111,67 +115,42 @@ easy feat: >
 				\}
 <
 
-NOTE
-Ant write errors to stdout instead of stderr, so calling
-|erroneous#execGetErrors| with printingMode 0 will not allow Erroneous to read
-the errors - because it prevents it from reading stdout. That also means that
-if you want to use it under windows you need to either have tee installed or
-to use Emake, Ebuild, Elmake or Elbuild when running Ant compilations.  Using
-Erun or Elrun without tee installed will result in Erroneous unable to get the
-stdout from Ant, preventing it from reading and parsing the errors.
 
+COMMANDS                                                  *erroneous-commands*
 
-
-COMMANDS                      *erroneous-commands*
-
-										*erroneous-Emake*
+										                     *erroneous-Emake*
 Emake[!] [argument]		Like running |:make| on the argument, but
 						auto-detects the error format.
 
-										*erroneous-Elmake*
+										                    *erroneous-Elmake*
 Elmake[!] [argument]   	Like Emake, but uses the location list.
 
-										*erroneous-Ebuild*
-Ebuild[!] [argument]	Run the argument as shell command(not using 'makeprg')
+										                      *erroneous-Erun*
+Erun[!] [argument]	Run the argument as shell command(not using 'makeprg')
 						and auto-detect the error format.
 
-										*erroneous-Elbuild*
-Elbuild[!] [argument]  	Like Ebuild, but uses the location list.
+										                     *erroneous-Elrun*
+Elrun[!] [argument]  	Like Erun, but uses the location list.
 
-										*erroneous-Erun*
-Erun[!] [argument]		Run the argument as shell command(not using 'makeprg')
-						and auto-detect the error format. If there were no
-						errors, do not alter the error list. In Windows, opens
-						a shell window to run the command.
+All commands take a single argument and jump to the first errror unless [!] is
+given.
 
-										*erroneous-Elrun*
-Elrun[!] [argument]   	Like Erun, but uses the location list.
-
-All commands take a single argument and jump to the first errror unless [!] is given.
-
-FUNCTIONS					  *erroneous-functions* *erroneous-api*
+FUNCTIONS					             *erroneous-functions* *erroneous-api*
 
 
-erroneous#run(command,clearIfNoError,errorPrintingMode,targetList,jump) *erroneous#run*
+erroneous#run                                                  *erroneous#run*
 				This is the function the commands call. It runs a shell
-				command, determines the error format, and updates the error
+				command silently, echos the results(stdout first and then
+				stderr), determines the error format, and updates the error
 				list.
 				-command			The shell command to run
 				-clearIfNoError		1 to clear the error list if there were no
 									errors
-                -errorPrintingMode	0 to not print any errors
-									1 to echo the errors after the program
-									  is done
-									2 to use "tee" to print the errors while
-									  the program runs(requires "tee")
-									3 to run the entire command silently, and
-									  print both stdout and stderr after the
-									  shell is done
                 -targetList         1 for the |quickfix| list
                                     2 for the |locations-list|
                 -jump				1 to jump to the first error
 
-erroneous#handleCommandResults                       *erroneous#handleCommandResults*
+erroneous#handleCommandResults                *erroneous#handleCommandResults*
 				This function can be called after running the command to
 				handle the errors. It's useful when using
 				|erroneous-customized-functions| that handle with build
@@ -188,7 +167,7 @@ erroneous#handleCommandResults                       *erroneous#handleCommandRes
                                     2 for the |locations-list|
                 -jump				1 to jump to the first error
 
-erroneous#setErrorList(targetList,jump,errors,errorFormat)	   *erroneous#setErrorList*
+erroneous#setErrorList	                              *erroneous#setErrorList*
 				This function updates the error list. If you use a function in
 				the error format dictionaries, you need to call it manually to
 				set the error list.
@@ -198,7 +177,7 @@ erroneous#setErrorList(targetList,jump,errors,errorFormat)	   *erroneous#setErro
                 -errors			The list or string of errors
                 -errorFormat	The error format to use for parsing the errors
 
-erroneous#getErrorFormat(command,depth)						 *erroneous#getErrorFormat*
+erroneous#getErrorFormat       					    *erroneous#getErrorFormat*
 				This function determines the 'errorformat' for the given
 				command. It uses the format dictionaries to make a desicion.
 				This function can use shebangs in Unix or file associations in
@@ -210,21 +189,13 @@ NOTE 	this function may return a string or a function - so if you need to
 		call it make sure you use a variable name that begins with a uppercase
 		letter: for example l:ErrorFormat instead of l:errorFormat.
 
-erroneous#execGetErrors(command,printingMode)				  *erroneous#execGetErrors*
-				This function simply runs a shell command and returns a list
-				with two elements. The first element is a list of lines from
-				stdout and the second is a list of lines from stderr.
+erroneous#execGetErrors				                 *erroneous#execGetErrors*
+				This function simply runs a shell command silently and returns
+				a list with two elements. The first element is a list of lines
+				from stdout and the second is a list of lines from stderr.
 				-command			The shell command to run
-				-printingMode		0 to not print stderr. stdout will be
-									printed normally
-									1 to print stdout and stderr using "tee"
-									2 to print nothing
-NOTE	Using printingMode 1 requires "tee" installed and in the path. Using
-		printingMode 0 prevents this function from returning stdout - which is
-		a problem if you try to run ant, since ant prints javac's stderr to
-		it's own stdout.
 
-erroneous#getCommandForRunningFile(file)		   *erroneous#getCommandForRunningFile*
+erroneous#getCommandForRunningFile		  *erroneous#getCommandForRunningFile*
 				-command			The shell command to run
                 -errorPrintingMode	0 to not print any errors
 									1 to echo the errors after the program
@@ -236,7 +207,7 @@ erroneous#getCommandForRunningFile(file)		   *erroneous#getCommandForRunningFile
 									  shell is done
 
 
-OTHER SETTINGS									 *erroneous-settings*
+OTHER SETTINGS      									  *erroneous-settings*
 
 *g:erroneous_detectionDepth*	The depth |erroneous#run| will use when
 								calling |erroneous#getErrorFormat|. If

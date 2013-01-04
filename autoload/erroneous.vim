@@ -1,29 +1,15 @@
-"Version: 0.2.1
+"Version: 0.3.0
 
 "execute a command and return a list of two items: stdout and stderr(both are
-"lists). If printingMode is 0 then it won't be able to return stdout.
+"lists).
 " * command: the command to run.
-" * printingMode: 0 to not print stderr, 1 to print stdout and stderr using
-" 'tee', and 2 to print nothing.
-function! erroneous#execGetErrors(command,printingMode)
+function! erroneous#execGetErrors(command)
+	let l:outFile=tempname()
 	let l:errFile=tempname()
-	let l:outFileContents=[]
-	if 0==a:printingMode
-		exe "!(".a:command.") 2>".l:errFile
-	else
-		let l:outFile=tempname()
-		if 1==a:printingMode
-			if has('unix')
-				exe "!(".a:command.") 2> >(tee ".l:errFile.") 1> >(tee ".l:outFile.")"
-			elseif has('win32')
-			endif
-		elseif 2==a:printingMode
-			exe "!(".a:command.") 2>".l:errFile." 1>".l:outFile
-		endif
-		let l:outFileContents=readfile(l:outFile)
-		call delete(l:outFile)
-	endif
+	silent exe "!(".a:command.") 2>".l:errFile." 1>".l:outFile
+	let l:outFileContents=readfile(l:outFile)
 	let l:errFileContents=readfile(l:errFile)
+	call delete(l:outFile)
 	call delete(l:errFile)
 	return [l:outFileContents,l:errFileContents]
 endfunction
@@ -59,31 +45,26 @@ endfunction
 "runs the command
 " * command: the command to run.
 " * clearIfNoError: determines if the list will be clear in case there were no errors.
-" * errorPrintingMode: 0 for not printing them, 1 for printing the file after
-"   the process finished, 2 for using 'tee' to print while the process is running,
-"   and 3 for running the command silently and printing the results afterward.
 " * targetList: 1 for the quickfix list, 2 for the locations list.
 " * jump: determines if vim will jump to the first error.
-function! erroneous#run(command,clearIfNoError,errorPrintingMode,targetList,jump)
+function! erroneous#run(command,clearIfNoError,targetList,jump)
 	"Run the command
-	if 0==a:errorPrintingMode
-		let [l:output,l:errors]=erroneous#execGetErrors(a:command,0)
-	elseif 1==a:errorPrintingMode
-		let [l:output,l:errors]=erroneous#execGetErrors(a:command,0)
-		echo join(l:errors,"\n")
-	elseif 2==a:errorPrintingMode
-		let [l:output,l:errors]=erroneous#execGetErrors(a:command,1)
-	elseif 3==a:errorPrintingMode
-		let [l:output,l:errors]=erroneous#execGetErrors(a:command,1)
+	let [l:output,l:errors]=erroneous#execGetErrors(a:command)
+	if 0<len(l:output)
+		echo join(l:output,"\n")
 	endif
-
-	"Check if there were errors
-	if len(l:errors)==0
+	"If there were no errors, we might want to clean the erro list(depends on argument)
+	if 0==len(l:errors)
 		if a:clearIfNoError
 			call erroneous#setErrorList(a:targetList,a:jump,"",0)
 		endif
 		return 0
 	endif
+
+	"If there were errors, we need to print them
+	echohl ErrorMsg
+	echo join(l:errors,"\n")
+	echohl None
 
 	return erroneous#handleCommandResults(a:command,l:output,l:errors,a:targetList,a:jump)
 endfunction
