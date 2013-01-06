@@ -3,7 +3,7 @@
 Author:  Idan Arye <https://github.com/someboddy/>
 License: Same terms as Vim itself (see |license|)
 
-Version: 0.2.1
+Version: 0.4.0
 
 INTRODUCTION                                                       *erroneous*
 
@@ -78,6 +78,7 @@ run, so they don't need to run it - just to handle the error output.
 
 Those functions should accept the following arguments:
 -	The command. The function shouldn't run it, - it was already ran
+-	The exit code received from running the command
 -	The standard output received from running the command
 -	The error output received from running the command
 -	The target list
@@ -89,8 +90,8 @@ because |erroneous#run| will retrun whatever that function returns. If the
 function uses |erroneous#setErrorList|, it should pass it's "targetList" and
 "jump" arguments to it.
 
-See the autoload/erroneous_make.vim, autoload/erroneous_rake.vim etc for
-examples to such functions.
+See the erroneous#parse*ErrorOutput functions in autoload/erroneous.vim for
+example for custom functions.
 
 
 BUILD SYSTEMS				                         *erroneous-build-systems*
@@ -104,16 +105,22 @@ Erroneous' customized functions can read the output from a build system, find
 the command the build system invoked that caused the error, and use it to
 determine the correct 'errorformat'.
 
-Erroneous comes built in with such customized functions to handle make, rake
-and ant. These functions are defined in Erroneous, but not assigned to the
+Erroneous comes built in with such customized functions to handle Make, Rake,
+Ant and Maven. These functions are defined in Erroneous, but not assigned to the
 error format dictionaries - you need to do that yourself. But that's a very
 easy feat: >
 	let g:erroneous_errorFormatChooserWords={
-				\'rake': function('erroneous_rake#parseErrorOutput'),
-				\'ant': function('erroneous_ant#parseErrorOutput'),
-				\'make': function('erroneous_make#parseErrorOutput'),
+				\'make': function('erroneous#parseMakeErrorOutput'),
+				\'rake': function('erroneous#parseRakeErrorOutput'),
+				\'ant': function('erroneous#parseAntErrorOutput'),
+				\'mvn': function('erroneous#parseMavenErrorOutput'),
 				\}
 <
+
+NOTE	Erroneous can only support Maven if it can use Ruby to run the shell
+		command. If Ruby is not supported, or if it was disabled(see
+		|g:erroneous_dontUseRuby|), Erroneous will not be able to detect that
+		a Maven task has failed, and will not be able to parse it's errors.
 
 
 COMMANDS                                                  *erroneous-commands*
@@ -191,7 +198,11 @@ NOTE 	this function may return a string or a function - so if you need to
 
 erroneous#execGetErrors				                 *erroneous#execGetErrors*
 				This function simply runs a shell command silently and returns
-				a list with two elements. The first element is a list of lines
+				a list with three elements. The first element is the exit
+				code. If ruby was used, it's the exit status of the shell
+				command. If ruby is not available or disabled(see
+				|g:erroneous_dontUseRuby|), the exit code is 0 if stderr was
+				empty, 1 otherwise.  The second element is a list of lines
 				from stdout and the second is a list of lines from stderr.
 				-command			The shell command to run
 
@@ -214,3 +225,8 @@ OTHER SETTINGS      									  *erroneous-settings*
 								undefined or not integer,
 								|erroneous#getErrorFormat| will be called with
 								depth 1.
+*g:erroneous_dontUseRuby*		Set to a true value(1) to prevent using Ruby
+								for running the command. There's really no
+								reason to do this, unless you want to
+								sympathize those poor souls who don't have
+								Ruby support in their Vim...
