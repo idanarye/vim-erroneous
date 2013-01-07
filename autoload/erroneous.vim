@@ -164,6 +164,20 @@ function! erroneous#getCommandForRunningFile(file)
 			endif
 		endif
 	elseif has('win32')
+		try
+			let l:suffix=matchstr(a:file,'\.\w*$')
+			let l:filetype=matchstr(system('assoc '.l:suffix),'=.*$')[1:]
+			let l:command matchstr(system('ftype '.l:filetype),'=.*$')[1:]
+			if 0<len(l:command)
+				return l:command
+			else
+				return 0
+			endif
+		catch
+			return 0
+		endtry
+	else
+		return 0
 	endif
 endfunction
 
