@@ -28,11 +28,14 @@ module Erroneous
 	#Echoes a string, allowing you to choose highlight group for it.
 	def self.vimEcho(msgs,highlight=nil)
 		msgs=[msgs] unless msgs.is_a? Array
+		restoreMoreOption=0!=VIM::evaluate('&more')
+		VIM::command 'set nomore'
 		msgs.flat_map{|e|e.split("\n")}.each do|line|
 			VIM::command "echohl #{highlight}" if highlight
 			VIM::command "echo #{to_vim line}"
 			VIM::command 'echohl None' if highlight
 		end
+		VIM::command 'set more' if restoreMoreOption
 	end
 
 	#Runs a shell command while echoing it's stdout and stderr, and returns
