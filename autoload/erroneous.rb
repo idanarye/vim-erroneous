@@ -1,4 +1,4 @@
-#Version: 0.4.0
+#Version: 0.5.0
 
 module Erroneous
 	require 'open3'
@@ -49,7 +49,7 @@ module Erroneous
 			errLines=[]
 			finishedReading=false
 			while wait_thd.status or not(finishedReading)
-				sleep 0
+				processCanceled=0!=VIM::evaluate("s:sleepCheckIfInterrupted()")
 				finishedReading=true
 				begin
 					outBuffer+=stdout.read_nonblock(1024)
@@ -67,6 +67,10 @@ module Erroneous
 				newErrLines,errBuffer=breakBuffer(errBuffer)
 				vimEcho newErrLines,:ErrorMsg
 				errLines+=newErrLines
+				if(processCanceled)
+					wait_thd.kill
+					return [wait_thd.value.exitstatus,outLines,errLines]
+				end
 			end
 			newOutLines,outBuffer=breakBuffer(outBuffer+"\n")
 			puts newOutLines

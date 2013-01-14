@@ -1,4 +1,4 @@
-"Version: 0.4.0
+"Version: 0.5.0
 
 if has('ruby')
 	ruby load File.join(VIM::evaluate("expand('<sfile>:p:h')"),'erroneous.rb')
@@ -281,4 +281,18 @@ function! erroneous#parseMavenErrorOutput(command,exitCode,output,errors,targetL
 	endif
 	call erroneous#setErrorList(a:targetList,a:jump,filter(a:output,'v:val=~''^\(\(\[ERROR\]\)\|\t\)'''),l:errorformat)
 	return a:exitCode
+endfunction
+
+"Service function to run a sleep command.
+"Returns 1 if interrupted with Ctrl+C, 0 otherwise.
+function! s:sleepCheckIfInterrupted()
+	let l:result=0
+	map <C-c> <silent><C-c>
+	try
+		sleep
+	catch
+		let l:result=1
+	endtry
+	unmap <C-c>
+	return l:result
 endfunction
