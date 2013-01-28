@@ -47,11 +47,11 @@ usually works, but Maven - one of the build systems supported by Erroneous -
 writes nothing to stderr, so without Ruby Erroneous is unable to tell if a call
 to a Maven task has succedded or failed, and simply doesn't work.
 
-Also, with Ruby, when Erroneous runs a command, you can see it's output as it
-runs. Without Ruby, Erroneous redirects the command's stdout and stderr to
-files that it reads, so you can only get the results once the command finishes.
-That also means that without Ruby, you will see stdout and then stderr, even if
-the command was writing to them both alternately.
+Also, with Ruby and unless you run Windows, when Erroneous runs a command, you
+can see it's output as it runs. Without Ruby, Erroneous redirects the command's
+stdout and stderr to files that it reads, so you can only get the results once
+the command finishes.  That also means that without Ruby, you will see stdout
+and then stderr, even if the command was writing to them both alternately.
 
 So: use Ruby. It's awesome.
 

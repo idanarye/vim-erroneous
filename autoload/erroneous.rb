@@ -1,7 +1,10 @@
-#Version: 0.5.0
+#Version: 0.6.0
 
 module Erroneous
 	require 'open3'
+	require 'rbconfig'
+
+	NO_POPEN_FOR_OS=['mingw32']
 
 	#Breaks the buffer into a list of lines that ends with "\n" and the
 	#remaining buffer.
@@ -41,6 +44,17 @@ module Erroneous
 	#Runs a shell command while echoing it's stdout and stderr, and returns
 	#exitCode, stdout and stderr.
 	def self.runShellCommand(command)
+		if NO_POPEN_FOR_OS.include? RbConfig::CONFIG['target_os']
+			outFile=VIM::evaluate('tempname()')
+			errFile=VIM::evaluate('tempname()')
+			result=system("(#{command}) 2>#{errFile} 1>#{outFile}")
+			outFileContent=File.readlines(outFile).map{|e|e.strip} rescue []
+			errFileContent=File.readlines(errFile).map{|e|e.strip} rescue []
+			File.delete outFile,errFile
+			vimEcho outFileContent
+			vimEcho errFileContent,:ErrorMsg
+			return [result ? 0 : 1,outFileContent,errFileContent]
+		end
 		Open3.popen3(command) do|stdin,stdout,stderr,wait_thd|
 			stdin.close_write
 			outBuffer=""

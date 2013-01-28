@@ -1,4 +1,4 @@
-"Version: 0.5.0
+"Version: 0.6.0
 
 if has('ruby')
 	ruby load File.join(VIM::evaluate("expand('<sfile>:p:h')"),'erroneous.rb')
@@ -14,29 +14,29 @@ function! erroneous#execGetErrors(command)
 	let l:outFile=tempname()
 	let l:errFile=tempname()
 	silent exe "!(".a:command.") 2>".l:errFile." 1>".l:outFile
-	let l:outFileContents=readfile(l:outFile)
-	let l:errFileContents=readfile(l:errFile)
+	let l:outFileContent=readfile(l:outFile)
+	let l:errFileContent=readfile(l:errFile)
 	call delete(l:outFile)
 	call delete(l:errFile)
 
 	"If there was output, we need to print it
-	if 0<len(l:outFileContents)
-		echo join(l:outFileContents,"\n")
+	if 0<len(l:outFileContent)
+		echo join(l:outFileContent,"\n")
 	endif
 	"If there were errors, we need to print them
-	if 0<len(l:errFileContents)
+	if 0<len(l:errFileContent)
 		echohl ErrorMsg
-		echo join(errFileContents,"\n")
+		echo join(errFileContent,"\n")
 		echohl None
 
 		"We can't tell the exit status without ruby, so since there was error
 		"output we just use 1.
-		return [1,l:outFileContents,l:errFileContents]
+		return [1,l:outFileContent,l:errFileContent]
 	endif
 
 	"We can't tell the exit status without ruby, so since there was no error
 	"output we just use 0.
-	return [0,l:outFileContents,l:errFileContents]
+	return [0,l:outFileContent,l:errFileContent]
 endfunction
 
 "set the specified error list(1=quickfix,2=locations) to the specified errors
