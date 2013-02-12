@@ -1,4 +1,4 @@
-"Version: 0.6.0
+"Version: 1.0.0
 
 command! -nargs=? -complete=shellcmd -bang Emake call erroneous#run(&makeprg." ".<q-args>,1,1,<bang>1)
 command! -nargs=? -complete=shellcmd -bang Elmake call erroneous#run(&makeprg." ".<q-args>,1,2,<bang>1)

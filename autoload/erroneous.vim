@@ -1,4 +1,4 @@
-"Version: 0.6.0
+"Version: 1.0.0
 
 if has('ruby')
 	ruby load File.join(VIM::evaluate("expand('<sfile>:p:h')"),'erroneous.rb')

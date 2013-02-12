@@ -38,7 +38,7 @@ Erroneous can not be used for running commands that require user interaction,
 since it redirects stderr and stdout to files and only displays them once the
 program finishes.
 
-REQUIREMENT/RECOMMENDATIONS: RUBY
+OPTIONAL REQUIREMENT: RUBY
 ============
 Erroneous can run without Ruby support in Vim, but it runs the best with it.
 Without Ruby, Erroneous can not detect the exit code of the command it runs, so
