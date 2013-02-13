@@ -1,16 +1,16 @@
 INTRODUCTION
 ============
-Erroneous is a plugin for handling errors from other programs. Vim provides
+Erroneous is a plugin for handling errors from external programs. Vim provides
 you with the `:make` command to run compilers and parse the errors using the
-'errorformat' option, but you must the 'errorformat' option in advance. If you
-more than one many language, you'll have to change 'errorformat' often. This
-is usually done with file-type plugins - but that means you have to always
-compile from one of the source files(you can't, for example, compile from one
-of the configuration XML files).
-You can also set a long 'errorformat' that can catch many formats - but in my
-experience those catch-all 'errorformat's tend to identify error-description
-lines as error headlines and create entries in the quickfix list that are
-mapped to nowhere and send you to empty buffers. Not as fun as it sounds...
+'errorformat' option, but you must set the 'errorformat' option in advance. If
+you use more than one language regularly, you'll have to change 'errorformat'
+often. This is usually done with file-type plugins - but that means you have to
+always compile from one of the source files(you can't, for example, compile
+from one of the configuration XML files).  You can also set a long, compound
+'errorformat' that can catch errors in many formats - but from my experience
+those catch-all 'errorformat's tend to identify error-description lines as
+error headlines and create entries in the quickfix list that are mapped to
+nowhere and send you to empty buffers. Not as fun as it sounds...
 
 Erroneous takes a different approach - instead of parsing stderr based on the
 filetype, parsing is done based on the shell command that invoked the program
