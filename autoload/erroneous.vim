@@ -283,6 +283,19 @@ function! erroneous#parseMavenErrorOutput(command,exitCode,output,errors,targetL
 	return a:exitCode
 endfunction
 
+"Parse errors for XBuild. To be placed inside the erroneous dictionaries.
+" * command: The command
+" * exitCode the exit code returned by the command
+" * output: The standard output
+" * errors: The error output
+" * targetList: The target list
+" * jump: The 'jump' choice
+function! erroneous#parseXBuildErrorOutput(command,exitCode,output,errors,targetList,jump)
+	if a:exitCode
+		call erroneous#setErrorList(a:targetList,a:jump,filter(a:output,'v:val=~"^\\(\\s\\@!\\).*(\\d\\+,\\d\\+)"'),'%f(%l\,%c): %m')
+	endif
+endfunction
+
 "Service function to run a sleep command.
 "Returns 1 if interrupted with Ctrl+C, 0 otherwise.
 function! s:sleepCheckIfInterrupted()
