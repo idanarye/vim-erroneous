@@ -40,18 +40,12 @@ program finishes.
 
 OPTIONAL REQUIREMENT: RUBY
 ============
-Erroneous can run without Ruby support in Vim, but it runs the best with it.
-Without Ruby, Erroneous can not detect the exit code of the command it runs, so
-it depends on checking stderr for determining if there was an error. This
-usually works, but Maven - one of the build systems supported by Erroneous -
-writes nothing to stderr, so without Ruby Erroneous is unable to tell if a call
-to a Maven task has succedded or failed, and simply doesn't work.
-
-Also, with Ruby and unless you run Windows, when Erroneous runs a command, you
-can see it's output as it runs. Without Ruby, Erroneous redirects the command's
-stdout and stderr to files that it reads, so you can only get the results once
-the command finishes.  That also means that without Ruby, you will see stdout
-and then stderr, even if the command was writing to them both alternately.
+Erroneous can run without Ruby support in Vim, but with Ruby and unless you run
+Windows, when Erroneous runs a command, you can see it's output as it runs.
+Without Ruby, Erroneous redirects the command's stdout and stderr to files that
+it reads, so you can only get the results once the command finishes.  That also
+means that without Ruby, you will see stdout and then stderr, even if the
+command was writing to them both alternately.
 
 So: use Ruby. It's awesome.
 
@@ -60,7 +54,6 @@ BUILD SYSTEM SUPPORT
 ====================
 Erroneous can read and parse error output from
 [Make](http://www.gnu.org/software/make), [Rake](http://rake.rubyforge.org) and
-[Apache Ant](http://ant.apache.org) and [Apache
-Maven](http://maven.apache.org), but it needs Ruby to use Maven. If you don't
-have Ruby support, or if you disable it, Erroneous won't be able to detect
-errros produced while running a Maven task.
+[Apache Ant](http://ant.apache.org), [Apache Maven](http://maven.apache.org),
+and [XBuild](http://www.mono-project.com/Microsoft.Build)(which is the same as
+[MSBuild](http://msdn2.microsoft.com/en-us/library/0k6kkbsd.aspx)).

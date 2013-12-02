@@ -106,21 +106,18 @@ the command the build system invoked that caused the error, and use it to
 determine the correct 'errorformat'.
 
 Erroneous comes built in with such customized functions to handle Make, Rake,
-Ant and Maven. These functions are defined in Erroneous, but not assigned to the
-error format dictionaries - you need to do that yourself. But that's a very
-easy feat: >
+Ant, Maven and XBuild(which is the same as MSBuild). These functions are
+defined in Erroneous, but not assigned to the error format dictionaries - you
+need to do that yourself.  But that's a very easy feat: >
 	let g:erroneous_errorFormatChooserWords={
 				\'make': function('erroneous#parseMakeErrorOutput'),
 				\'rake': function('erroneous#parseRakeErrorOutput'),
 				\'ant': function('erroneous#parseAntErrorOutput'),
 				\'mvn': function('erroneous#parseMavenErrorOutput'),
+				\'xbuild': function('erroneous#parseXBuildErrorOutput'),
+				\'MSBuild': function('erroneous#parseXBuildErrorOutput'),
 				\}
 <
-
-NOTE	Erroneous can only support Maven if it can use Ruby to run the shell
-		command. If Ruby is not supported, or if it was disabled(see
-		|g:erroneous_dontUseRuby|), Erroneous will not be able to detect that
-		a Maven task has failed, and will not be able to parse it's errors.
 
 
 COMMANDS                                                  *erroneous-commands*
@@ -199,10 +196,7 @@ NOTE 	this function may return a string or a function - so if you need to
 erroneous#execGetErrors				                 *erroneous#execGetErrors*
 				This function simply runs a shell command silently and returns
 				a list with three elements. The first element is the exit
-				code. If ruby was used, it's the exit status of the shell
-				command. If ruby is not available or disabled(see
-				|g:erroneous_dontUseRuby|), the exit code is 0 if stderr was
-				empty, 1 otherwise.  The second element is a list of lines
+				code. The second element is a list of lines
 				from stdout and the second is a list of lines from stderr.
 				-command			The shell command to run
 
