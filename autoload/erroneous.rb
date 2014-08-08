@@ -1,5 +1,3 @@
-#Version: 1.1.0
-
 module Erroneous
 	require 'open3'
 	require 'rbconfig'
@@ -62,9 +60,10 @@ module Erroneous
 			errBuffer=""
 			errLines=[]
 			finishedReading=false
-			while wait_thd.status or not(finishedReading)
+			while (wait_thd.status and not(stdout.eof? or stderr.eof?)) or not(finishedReading)
 				processCanceled=0!=VIM::evaluate("s:sleepCheckIfInterrupted()")
 				finishedReading=true
+				IO.select([stdout,stderr])
 				begin
 					outBuffer+=stdout.read_nonblock(1024)
 					finishedReading=false
