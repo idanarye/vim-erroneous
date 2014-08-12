@@ -55,5 +55,6 @@ BUILD SYSTEM SUPPORT
 Erroneous can read and parse error output from
 [Make](http://www.gnu.org/software/make), [Rake](http://rake.rubyforge.org) and
 [Apache Ant](http://ant.apache.org), [Apache Maven](http://maven.apache.org),
-and [XBuild](http://www.mono-project.com/Microsoft.Build)(which is the same as
-[MSBuild](http://msdn2.microsoft.com/en-us/library/0k6kkbsd.aspx)).
+[XBuild](http://www.mono-project.com/Microsoft.Build)(which is the same as
+[MSBuild](http://msdn2.microsoft.com/en-us/library/0k6kkbsd.aspx)) and
+[Waf](https://code.google.com/p/waf/).

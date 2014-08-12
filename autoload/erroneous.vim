@@ -105,6 +105,25 @@ function! erroneous#handleCommandResults(command,exitCode,output,errors,targetLi
 	endif
 endfunction
 
+"Assumed the supplied command was ran and given the supplied errors, and
+"parses them normally.
+" * command: the command that was ran.
+" * exitCode the exit code returned by the command.
+" * output the standard output that were returned.
+" * errors: the errors that were returned.
+" * targetList: 1 for the quickfix list, 2 for the locations list.
+" * jump: determines if vim will jump to the first error.
+" * dir: run this function inside that directory
+function! erroneous#handleCommandResultsInAnotherDir(command,exitCode,output,errors,targetList,jump,dir)
+	let l:currentDir=getcwd()
+	execute 'cd '.fnameescape(a:dir)
+	try
+		return erroneous#handleCommandResults(a:command,a:exitCode,a:output,a:errors,a:targetList,a:jump)
+	finally
+		execute 'cd '.fnameescape(l:currentDir)
+	endtry
+endfunction
+
 "find the error format for a shell command
 " * command: the command to get the format to
 " * depth: how deep to go into files to search for shebangs\associations
@@ -287,6 +306,69 @@ function! erroneous#parseXBuildErrorOutput(command,exitCode,output,errors,target
 	if a:exitCode
 		call erroneous#setErrorList(a:targetList,a:jump,filter(a:output,'v:val=~"^\\(\\s\\@!\\).*(\\d\\+,\\d\\+)"'),'%f(%l\,%c): %m')
 	endif
+endfunction
+
+"Parse errors for Waf. To be placed inside the erroneous dictionaries.
+" * command: The command
+" * exitCode the exit code returned by the command
+" * output: The standard output
+" * errors: The error output
+" * targetList: The target list
+" * jump: The 'jump' choice
+function! erroneous#parseWafErrorOutput(command,exitCode,output,errors,targetList,jump)
+	if 0!=a:exitCode
+		"Find where Waf printed the command line that threw
+		let l:wafErrorEndLine=match(a:errors,'\v^Build failed$')
+		let l:errorCommandLine=match(a:errors,"\\v^'.*'$",l:wafErrorEndLine)
+		let l:errorCommand=matchstr(a:errors[l:errorCommandLine],"\\v^'\\s*\\zs.{-}\\ze\\s*'$")
+
+		"Find the end of the actual errors block
+		let l:wafErrorEndLine=l:wafErrorEndLine-1
+		while 0<=l:wafErrorEndLine
+					\&& a:errors[l:wafErrorEndLine]=~'\v^Waf\:'
+			let l:wafErrorEndLine=l:wafErrorEndLine-1
+		endwhile
+
+
+		"Find the start of the actual errors block
+		let l:wafErrorStartLine=l:wafErrorEndLine
+		while 0<=l:wafErrorStartLine
+					\&& a:errors[l:wafErrorStartLine]!~'\v^\[\d+\/\d+\].*\:.*\-\>.*$'
+			let l:wafErrorStartLine=l:wafErrorStartLine-1
+		endwhile
+		let l:wafErrorStartLine=l:wafErrorStartLine+1
+
+		let l:actualErrors=a:errors[(l:wafErrorStartLine):(l:wafErrorEndLine)]
+
+		"Find the directory Waf operated in
+		let l:wafDirEntryLine=l:wafErrorStartLine
+		while 0<=l:wafDirEntryLine
+					\&& a:errors[l:wafDirEntryLine]!~'\V\^Waf: Entering directory '
+			let l:wafDirEntryLine=l:wafDirEntryLine-1
+		endwhile
+
+		"If the error command is empty, that means it was invoked via a Waf
+		"task. We should take a look at the task's name:
+		if empty(l:errorCommand)
+			let l:wafTask=matchstr(a:errors[l:wafErrorStartLine-1],'\v\[\d+\/\d+\]\s*\zs[^:]*\ze\s*\:')
+			"If we have mapping, figure it from there:
+			if exists('g:erroneous_wafTaskMeaning')
+				let l:errorCommand=get(g:erroneous_wafTaskMeaning,l:wafTask,l:wafTask)
+			else "If we don't have mapping, just use the task name:
+				let l:errorCommand=l:wafTask
+			endif
+		endif
+
+		if 0<=l:wafDirEntryLine
+			let l:dir=matchstr(a:errors[l:wafDirEntryLine],'\v^Waf\: Entering directory \S\zs.*\ze\S$')
+			return erroneous#handleCommandResultsInAnotherDir(l:errorCommand,a:exitCode,a:output,l:actualErrors,a:targetList,a:jump,l:dir)
+		else
+			return erroneous#handleCommandResults(l:errorCommand,a:exitCode,a:output,l:actualErrors,a:targetList,a:jump)
+		endif
+	end
+	call erroneous#setErrorList(a:targetList,a:jump,a:errors,0)
+	return 1
+	"return a:exitCode
 endfunction
 
 "Service function to run a sleep command.
