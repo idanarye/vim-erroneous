@@ -3,7 +3,7 @@
 Author:  Idan Arye <https://github.com/someboddy/>
 License: Same terms as Vim itself (see |license|)
 
-Version: 1.2.0
+Version: 1.2.0+
 
 INTRODUCTION                                                       *erroneous*
 
@@ -232,3 +232,15 @@ OTHER SETTINGS                                            *erroneous-settings*
                                 this dictionary, or if the task name does not
                                 appear in it, Erroneous will assume that
                                 command name is identical to the task name.
+
+
+OMNIPYTENT INTERFACE                          *erroneous-omnipytent-interface*
+
+Requires Omnipytent: https://github.com/idanarye/vim-omnipytent
+
+From an |omnipytent| tasks file you have access to the
+"omnipytent.ext.erroneous" module, which provides:
+
+    ERUN    An |omnipytent-ShellCommandExecuter| for running "Erun!"
+
+    ELRUN   An |omnipytent-ShellCommandExecuter| for running "Elrun!"
