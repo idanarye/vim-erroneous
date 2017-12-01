@@ -3,7 +3,7 @@
 Author:  Idan Arye <https://github.com/someboddy/>
 License: Same terms as Vim itself (see |license|)
 
-Version: 1.2.0+
+Version: 1.3.0
 
 INTRODUCTION                                                       *erroneous*
 
