@@ -138,7 +138,7 @@ Erun[!] [argument]  Run the argument as shell command(not using 'makeprg')
                                                              *erroneous-Elrun*
 Elrun[!] [argument]     Like Erun, but uses the location list.
 
-All commands take a single argument and jump to the first errror unless [!] is
+All commands take a single argument and jump to the first error unless [!] is
 given.
 
 FUNCTIONS                                *erroneous-functions* *erroneous-api*
@@ -239,8 +239,12 @@ OMNIPYTENT INTERFACE                          *erroneous-omnipytent-interface*
 Requires Omnipytent: https://github.com/idanarye/vim-omnipytent
 
 From an |omnipytent| tasks file you have access to the
-"omnipytent.ext.erroneous" module, which provides:
+"omnipytent.ext.erroneous" module, which provides "ERUN" - an
+|omnipytent-ShellCommandExecuter| for running "Erun". It's behavior can be configured:
 
-    ERUN    An |omnipytent-ShellCommandExecuter| for running "Erun!"
+*   "ERUN.loc" will use the location list instead of the quickfix list(like
+    ":Elrun")
+*   "ERUN.bang" will prevent Vim from jumping to the first error(like ":Erun!")
 
-    ELRUN   An |omnipytent-ShellCommandExecuter| for running "Elrun!"
+You can combine them("ERUN.loc.bang" or "ERUN.bang.loc") to get both behaviors
+(like ":Elrun!")
